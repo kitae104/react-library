@@ -13,9 +13,7 @@ export const Carousel: React.FC<{}> = () => {
     useEffect(() => {
         const fetchBooks = async () => {
             const baseUrl: string = "http://localhost/api/books";
-
             const url: string = `${baseUrl}?page=0&size=9`;
-
             const response = await fetch(url);
 
             if (!response.ok) {
@@ -23,9 +21,7 @@ export const Carousel: React.FC<{}> = () => {
             }
 
             const responseJson = await response.json();
-
             const responseData = responseJson._embedded.books;
-
             const loadedBooks: BookModel[] = [];
 
             for (const key in responseData) {
@@ -40,7 +36,6 @@ export const Carousel: React.FC<{}> = () => {
                     img: responseData[key].img,
                 });
             }
-
             setBooks(loadedBooks);
             setIsLoading(false);
         };
