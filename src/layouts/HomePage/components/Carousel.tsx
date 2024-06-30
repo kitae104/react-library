@@ -3,6 +3,7 @@ import BookModel from "../../../models/BookModel";
 import { ReturnBook } from "./ReturnBook";
 import axios from "axios";
 import { SpinnerLoading } from "../../Utils/SpinnerLoading";
+import { Link } from "react-router-dom";
 
 export const Carousel: React.FC<{}> = () => {
 
@@ -114,7 +115,7 @@ export const Carousel: React.FC<{}> = () => {
                 </div>
             </div>
             <div className='homepage-carousel-title mt-3'>
-                <a className='btn btn-outline-secondary btn-lg' href='#'>View More</a>
+                <Link className='btn btn-outline-secondary btn-lg' to='/search'>View More</Link>
             </div>
         </div>
     );

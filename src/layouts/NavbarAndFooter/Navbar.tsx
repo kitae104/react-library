@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
+
 export const Navbar: React.FC<{}> = () => {
     return (
         <nav className='navbar navbar-expand-lg navbar-dark main-color py-3'>
-            <div className='container-fluid'>
-                <span className='navbar-brand'>Kitae</span>
+            <div className='container-fluid'>                
+                <Link to="/" className="navbar-brand">Kitae</Link>
                 <button className='navbar-toggler' type='button' data-bs-toggle='collapse' data-bs-target='#navbarNavDropdown'
                     aria-controls='navbarNavDropdown' aria-expanded='false' aria-label='Toggle Navigation'>
                     <span className='navbar-toggler-icon'></span>
@@ -10,10 +12,10 @@ export const Navbar: React.FC<{}> = () => {
                 <div className='collapse navbar-collapse' id='navbarNavDropdown'>
                     <ul className='navbar-nav'>
                         <li className='nav-item'>
-                            <a className='nav-link active' href='#'>Home</a>
+                            <Link to="/" className="nav-link">Home</Link>
                         </li>
                         <li className='nav-item'>
-                            <a className='nav-link' href='#'>Search Books</a>
+                            <Link to="/search" className="nav-link">Search Books</Link>
                         </li>
                     </ul>
                     <ul className='navbar-nav ms-auto'>
