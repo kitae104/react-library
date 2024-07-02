@@ -4,19 +4,29 @@ import { SpinnerLoading } from "../Utils/SpinnerLoading";
 import axios from "axios";
 import { StarsReview } from "../Utils/StarsReview";
 import { CheckoutAndReviewBox } from "./CheckoutAndReviewBox";
+import ReviewModel from "../../models/ReviewModel";
+import { LatestReviews } from "./LatestReviews";
 
 export const BookCheckoutPage: React.FC<{}> = () => {
   const [book, setBook] = useState<BookModel>(); // 책 정보
   const [isLoading, setIsLoading] = useState<boolean>(true); // 로딩 중
   const [httpError, setHttpError] = useState<string | null>(null); // 에러 메시지
 
+  // Review State
+  const [reviews, setReviews] = useState<ReviewModel[]>([]); // 리뷰 정보
+  const [totalStars, setTotalStars] = useState<number>(0); // 총 별점
+  const [isLoadingReview, setIsLoadingReview] = useState<boolean>(false); // 리뷰 로딩 중
+
+
   const bookId = window.location.pathname.split("/")[2]; // 책 ID
 
+  //============================
+  // 책 정보 가져오기
+  //============================
   useEffect(() => {
-    // 책정보 가져오기
+
     const fetchBook = async () => {
       setIsLoading(true);
-
       try {
         const baseUrl: string = `http://localhost/api/books/${bookId}`;
 
@@ -47,8 +57,55 @@ export const BookCheckoutPage: React.FC<{}> = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  //============================
+  // 리뷰 정보 가져오기
+  //============================
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setIsLoadingReview(true);
+      console.log("AAAAAA");
+      try {
+        const reviewUrl: string = `http://localhost/api/reviews/search/findByBookId?bookId=${bookId}`;
+
+        const response = await axios.get(reviewUrl);
+        const responseData = response.data._embedded.reviews;
+        // console.log(responseData);
+
+        const loadedReviews: ReviewModel[] = [];
+        let weightedStarReviews: number = 0;
+
+        for (const key in responseData) {
+          loadedReviews.push({
+            id: responseData[key].id,
+            userEmail: responseData[key].userEmail,
+            date: responseData[key].date,
+            rating: responseData[key].rating,
+            book_id: responseData[key].book_id,
+            reviewDescription: responseData[key].reviewDescription
+          });
+          weightedStarReviews += responseData[key].rating;
+        }
+
+        if (loadedReviews) {
+          const round = (Math.round((weightedStarReviews / loadedReviews.length) * 2) / 2).toFixed(1); // 반올림
+          setTotalStars(Number(round)); // 총 별점
+        }
+        setReviews(loadedReviews);
+        setIsLoadingReview(false);
+
+      } catch (error: any) {
+        console.error(error);
+        setHttpError(error.message);
+      } finally {
+        setIsLoadingReview(false);
+      }
+    }
+    fetchReviews();
+  }, []); 
+
+
   // 로딩 중일 때
-  if (isLoading) {
+  if (isLoading || isLoadingReview) {
     return <SpinnerLoading />;
   }
 
@@ -84,12 +141,13 @@ export const BookCheckoutPage: React.FC<{}> = () => {
               <h2>{book?.title}</h2>
               <h5 className="text-primary">{book?.author}</h5>
               <p className="lead">{book?.description}</p>
-              <StarsReview rating={4.5} size={32} />
+              <StarsReview rating={totalStars} size={32} />
             </div>
           </div>
           <CheckoutAndReviewBox book={book} mobile={false} />
         </div>
         <hr />
+        <LatestReviews reviews={reviews} bookId={book?.id} mobile={false} />
       </div>
       <div className="container d-lg-none mt-5">
         <div className="d-flex justify-content-center align-items-center">
@@ -114,6 +172,7 @@ export const BookCheckoutPage: React.FC<{}> = () => {
         </div>
         <CheckoutAndReviewBox book={book} mobile={true} />
         <hr />
+        <LatestReviews reviews={reviews} bookId={book?.id} mobile={true} />
       </div>
     </div>
   );
