@@ -18,7 +18,7 @@ export const Carousel: React.FC<{}> = () => {
             const response = await fetch(url);
 
             if (!response.ok) {
-                throw new Error('Something went wrong!');
+                throw new Error('Carousel 부분에서 호출에 문제가 있습니다.!');
             }
 
             const responseJson = await response.json();

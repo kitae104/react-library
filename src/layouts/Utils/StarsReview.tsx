@@ -31,6 +31,7 @@ export const StarsReview: React.FC<{ rating: number; size: number }> = (
     <div>
       {Array.from({ length: fullStars }, (_, i) => (
         <svg
+          key={i}
           xmlns="http://www.w3.org/2000/svg"
           width={props.size}
           height={props.size}
@@ -44,6 +45,7 @@ export const StarsReview: React.FC<{ rating: number; size: number }> = (
       ))}
       {Array.from({ length: halfStars }, (_, i) => (
         <svg
+          key={i}
           xmlns="http://www.w3.org/2000/svg"
           width={props.size}
           height={props.size}
@@ -57,6 +59,7 @@ export const StarsReview: React.FC<{ rating: number; size: number }> = (
       ))}
       {Array.from({ length: emptyStars }, (_, i) => (
         <svg
+          key={i}
           xmlns="http://www.w3.org/2000/svg"
           width={props.size}
           height={props.size}

@@ -15,19 +15,21 @@ const oktaAuth = new OktaAuth(oktaConfig)
 
 export const App = () => {
 
-  const navigate = useNavigate()
+  
 
-  const customAuthHandler = () => {
+  const CustomAuthHandler = () => {
+    const navigate = useNavigate();
     navigate('/login');
   }
 
-  const restoreOriginalUri = async (_oktaAuth: any, originalUri: any) => {
+  const RestoreOriginalUri = async (_oktaAuth: any, originalUri: any) => {
+    const navigate = useNavigate();
     navigate(toRelativeUrl(originalUri || '/', window.location.origin), { replace: true });
   }
 
   return (
     <div className='d-flex flex-column min-vh-100'>
-      <Security oktaAuth={oktaAuth} restoreOriginalUri={restoreOriginalUri} onAuthRequired={customAuthHandler}>
+      <Security oktaAuth={oktaAuth} restoreOriginalUri={RestoreOriginalUri} onAuthRequired={CustomAuthHandler}>
         <Navbar />
         <div className='flex-grow-1'>
           <Routes>

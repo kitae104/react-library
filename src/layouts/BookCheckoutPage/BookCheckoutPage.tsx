@@ -6,16 +6,28 @@ import { StarsReview } from "../Utils/StarsReview";
 import { CheckoutAndReviewBox } from "./CheckoutAndReviewBox";
 import ReviewModel from "../../models/ReviewModel";
 import { LatestReviews } from "./LatestReviews";
+import { useOktaAuth } from "@okta/okta-react";
 
 export const BookCheckoutPage: React.FC<{}> = () => {
+
+  const { authState } = useOktaAuth(); // Okta 인증 상태
+
   const [book, setBook] = useState<BookModel>(); // 책 정보
   const [isLoading, setIsLoading] = useState<boolean>(true); // 로딩 중
   const [httpError, setHttpError] = useState<string | null>(null); // 에러 메시지
 
-  // Review State
+  // 리뷰 상태 
   const [reviews, setReviews] = useState<ReviewModel[]>([]); // 리뷰 정보
   const [totalStars, setTotalStars] = useState<number>(0); // 총 별점
-  const [isLoadingReview, setIsLoadingReview] = useState<boolean>(false); // 리뷰 로딩 중
+  const [isLoadingReview, setIsLoadingReview] = useState<boolean>(true); // 리뷰 로딩 중
+
+  // 대여 숫자 상태 
+  const [currentLoansCount, setCurrentLoansCount] = useState<number>(0); // 현재 대여 중인 책 수
+  const [isLoadingCurrentLoansCount, setIsLoadingCurrentLoansCount] = useState<boolean>(true); // 대여 숫자 로딩 중
+
+  // 책 대출 여부 확인 
+  const [isCheckedOut, setIsCheckedOut] = useState<boolean>(false); // 대출 여부 [true: 대출 가능, false: 대출 불가능
+  const [isLoadingBookCheckedOut, setIsLoadingBookCheckedOut] = useState<boolean>(true); // 대출 여부 로딩 중
 
 
   const bookId = window.location.pathname.split("/")[2]; // 책 ID
@@ -24,88 +36,146 @@ export const BookCheckoutPage: React.FC<{}> = () => {
   // 책 정보 가져오기
   //============================
   useEffect(() => {
-
     const fetchBook = async () => {
-      setIsLoading(true);
-      try {
-        const baseUrl: string = `http://localhost/api/books/${bookId}`;
+      const baseUrl: string = `http://localhost/api/books/${bookId}`;
 
-        const response = await axios.get(baseUrl);
-        const book = response.data;
+      const response = await fetch(baseUrl);
 
-        const loadedBook: BookModel = {
-          id: book.id,
-          title: book.title,
-          author: book.author,
-          description: book.description,
-          copies: book.copies,
-          copiesAvailable: book.copiesAvailable,
-          category: book.category,
-          img: book.img,
-        };
-
-        setBook(loadedBook);
-        setIsLoading(false);
-      } catch (error) {
-        console.error(error);
-        setHttpError("Something went wrong!");
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error('Something went wrong!');
       }
+
+      const responseJson = await response.json();
+
+      const loadedBook: BookModel = {
+        id: responseJson.id,
+        title: responseJson.title,
+        author: responseJson.author,
+        description: responseJson.description,
+        copies: responseJson.copies,
+        copiesAvailable: responseJson.copiesAvailable,
+        category: responseJson.category,
+        img: responseJson.img,
+      };
+
+      setBook(loadedBook);
+      setIsLoading(false);
     };
-    fetchBook();
-    window.scrollTo(0, 0);
-  }, []);
+    fetchBook().catch((error: any) => {
+      setIsLoading(false);
+      setHttpError(error.message);
+    })
+  }, [isCheckedOut]);
 
   //============================
   // 리뷰 정보 가져오기
   //============================
   useEffect(() => {
-    const fetchReviews = async () => {
-      setIsLoadingReview(true);
-      console.log("AAAAAA");
-      try {
-        const reviewUrl: string = `http://localhost/api/reviews/search/findByBookId?bookId=${bookId}`;
+    const fetchBookReviews = async () => {
+      const reviewUrl: string = `http://localhost/api/reviews/search/findByBookId?bookId=${bookId}`;
 
-        const response = await axios.get(reviewUrl);
-        const responseData = response.data._embedded.reviews;
-        // console.log(responseData);
+      const responseReviews = await fetch(reviewUrl);
 
-        const loadedReviews: ReviewModel[] = [];
-        let weightedStarReviews: number = 0;
-
-        for (const key in responseData) {
-          loadedReviews.push({
-            id: responseData[key].id,
-            userEmail: responseData[key].userEmail,
-            date: responseData[key].date,
-            rating: responseData[key].rating,
-            book_id: responseData[key].book_id,
-            reviewDescription: responseData[key].reviewDescription
-          });
-          weightedStarReviews += responseData[key].rating;
-        }
-
-        if (loadedReviews) {
-          const round = (Math.round((weightedStarReviews / loadedReviews.length) * 2) / 2).toFixed(1); // 반올림
-          setTotalStars(Number(round)); // 총 별점
-        }
-        setReviews(loadedReviews);
-        setIsLoadingReview(false);
-
-      } catch (error: any) {
-        console.error(error);
-        setHttpError(error.message);
-      } finally {
-        setIsLoadingReview(false);
+      if (!responseReviews.ok) {
+        throw new Error('Something went wrong!');
       }
+
+      const responseJsonReviews = await responseReviews.json();
+
+      const responseData = responseJsonReviews._embedded.reviews;
+
+      const loadedReviews: ReviewModel[] = [];
+
+      let weightedStarReviews: number = 0;
+
+      for (const key in responseData) {
+        loadedReviews.push({
+          id: responseData[key].id,
+          userEmail: responseData[key].userEmail,
+          date: responseData[key].date,
+          rating: responseData[key].rating,
+          book_id: responseData[key].bookId,
+          reviewDescription: responseData[key].reviewDescription,
+        });
+        weightedStarReviews = weightedStarReviews + responseData[key].rating;
+      }
+
+      if (loadedReviews) {
+        const round = (Math.round((weightedStarReviews / loadedReviews.length) * 2) / 2).toFixed(1);
+        setTotalStars(Number(round));
+      }
+
+      setReviews(loadedReviews);
+      setIsLoadingReview(false);
+    };
+
+    fetchBookReviews().catch((error: any) => {
+      setIsLoadingReview(false);
+      setHttpError(error.message);
+    })
+  }, []);
+
+  //============================
+  // 대여 숫자 가져오기
+  //============================
+  useEffect(() => {
+    const fetchUserCurrentLoansCount = async () => {
+      if (authState && authState.isAuthenticated) {
+        const url = `http://localhost/api/books/secure/currentloans/count`;
+        const requestOptions = {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${authState.accessToken?.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        };
+        const currentLoansCountResponse = await fetch(url, requestOptions);
+        if (!currentLoansCountResponse.ok) {
+          throw new Error('Something went wrong!');
+        }
+        const currentLoansCountResponseJson = await currentLoansCountResponse.json();
+        setCurrentLoansCount(currentLoansCountResponseJson);
+      }
+      setIsLoadingCurrentLoansCount(false);
     }
-    fetchReviews();
-  }, []); 
+    fetchUserCurrentLoansCount().catch((error: any) => {
+      setIsLoadingCurrentLoansCount(false);
+      setHttpError(error.message);
+    })
+  }, [authState, isCheckedOut]);
+
+  useEffect(() => {
+    const fetchUserCheckedOutBook = async () => {
+      if (authState && authState.isAuthenticated) {
+        const url = `http://localhost/api/books/secure/ischeckout/byuser?bookId=${bookId}`;
+        const requestOptions = {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${authState.accessToken?.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        };
+        const bookCheckedOut = await fetch(url, requestOptions);
+
+        if (!bookCheckedOut.ok) {
+          throw new Error('Something went wrong!');
+        }
+
+        const bookCheckedOutResponseJson = await bookCheckedOut.json();
+        console.log("bookCheckedOutResponseJson : ", bookCheckedOutResponseJson);
+        setIsCheckedOut(bookCheckedOutResponseJson);
+      }
+      setIsLoadingBookCheckedOut(false);
+    }
+    fetchUserCheckedOutBook().catch((error: any) => {
+      setIsLoadingBookCheckedOut(false);
+      setHttpError(error.message + "11");
+    })
+  }, [authState]);
 
 
   // 로딩 중일 때
-  if (isLoading || isLoadingReview) {
+  if (isLoading || isLoadingReview || isLoadingCurrentLoansCount || isLoadingBookCheckedOut) {
     return <SpinnerLoading />;
   }
 
@@ -118,6 +188,22 @@ export const BookCheckoutPage: React.FC<{}> = () => {
         </div>
       </div>
     );
+  }
+
+  async function checkoutBook() {
+    const url = `http://localhost/api/books/secure/checkout?bookId=${book?.id}`;
+    const requestOptions = {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${authState?.accessToken?.accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    };
+    const checkoutResponse = await fetch(url, requestOptions);
+    if (!checkoutResponse.ok) {
+      throw new Error('Something went wrong!');
+    }
+    setIsCheckedOut(true);
   }
 
   return (
@@ -144,7 +230,8 @@ export const BookCheckoutPage: React.FC<{}> = () => {
               <StarsReview rating={totalStars} size={32} />
             </div>
           </div>
-          <CheckoutAndReviewBox book={book} mobile={false} />
+          <CheckoutAndReviewBox book={book} mobile={false} currentLoansCount={currentLoansCount}
+            isAuthenticated={authState?.isAuthenticated} isCheckedOut={isCheckedOut} checkoutBook={checkoutBook} />
         </div>
         <hr />
         <LatestReviews reviews={reviews} bookId={book?.id} mobile={false} />
@@ -170,7 +257,8 @@ export const BookCheckoutPage: React.FC<{}> = () => {
             <StarsReview rating={4.5} size={32} />
           </div>
         </div>
-        <CheckoutAndReviewBox book={book} mobile={true} />
+        <CheckoutAndReviewBox book={book} mobile={false} currentLoansCount={currentLoansCount}
+          isAuthenticated={authState?.isAuthenticated} isCheckedOut={isCheckedOut} checkoutBook={checkoutBook} />
         <hr />
         <LatestReviews reviews={reviews} bookId={book?.id} mobile={true} />
       </div>
