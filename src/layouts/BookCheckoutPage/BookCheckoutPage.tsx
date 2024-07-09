@@ -1,12 +1,12 @@
+import { useOktaAuth } from "@okta/okta-react";
 import { useEffect, useState } from "react";
 import BookModel from "../../models/BookModel";
+import ReviewModel from "../../models/ReviewModel";
 import { SpinnerLoading } from "../Utils/SpinnerLoading";
-import axios from "axios";
 import { StarsReview } from "../Utils/StarsReview";
 import { CheckoutAndReviewBox } from "./CheckoutAndReviewBox";
-import ReviewModel from "../../models/ReviewModel";
 import { LatestReviews } from "./LatestReviews";
-import { useOktaAuth } from "@okta/okta-react";
+import ReviewRequestModel from "../../models/ReviewRequestModel";
 
 export const BookCheckoutPage: React.FC<{}> = () => {
 
@@ -21,6 +21,9 @@ export const BookCheckoutPage: React.FC<{}> = () => {
   const [totalStars, setTotalStars] = useState<number>(0); // 총 별점
   const [isLoadingReview, setIsLoadingReview] = useState<boolean>(true); // 리뷰 로딩 중
 
+  const [isReviewLeft, setIsReviewLeft] = useState<boolean>(false); // 리뷰 작성 여부 [true: 리뷰 작성 가능, false: 리뷰 작성 불가능
+  const [isLoadingUserReview, setIsLoadingUserReview] = useState<boolean>(true); // 리뷰 작성 여부 로딩 중
+
   // 대여 숫자 상태 
   const [currentLoansCount, setCurrentLoansCount] = useState<number>(0); // 현재 대여 중인 책 수
   const [isLoadingCurrentLoansCount, setIsLoadingCurrentLoansCount] = useState<boolean>(true); // 대여 숫자 로딩 중
@@ -30,7 +33,7 @@ export const BookCheckoutPage: React.FC<{}> = () => {
   const [isLoadingBookCheckedOut, setIsLoadingBookCheckedOut] = useState<boolean>(true); // 대출 여부 로딩 중
 
 
-  const bookId = window.location.pathname.split("/")[2]; // 책 ID
+  const bookId = (window.location.pathname).split("/")[2]; // 책 ID
 
   //============================
   // 책 정보 가져오기
@@ -113,7 +116,36 @@ export const BookCheckoutPage: React.FC<{}> = () => {
       setIsLoadingReview(false);
       setHttpError(error.message);
     })
-  }, []);
+  }, [isReviewLeft]);
+
+  //============================
+  // 유저 리뷰 여부 가져오기
+  //============================
+  useEffect(() => {
+    const fetchUserReviewBook = async () => {
+      if (authState && authState.isAuthenticated) {
+        const url = `http://localhost/api/reviews/secure/user/book?bookId=${bookId}`;
+        const requestOptions = {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${authState.accessToken?.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        };
+        const userReview = await fetch(url, requestOptions);
+        if (!userReview.ok) {
+          throw new Error('Something went wrong');
+        }
+        const userReviewResponseJson = await userReview.json();
+        setIsReviewLeft(userReviewResponseJson);
+      }
+      setIsLoadingUserReview(false);
+    }
+    fetchUserReviewBook().catch((error: any) => {
+      setIsLoadingUserReview(false);
+      setHttpError(error.message);
+    })
+  }, [authState]);
 
   //============================
   // 대여 숫자 가져오기
@@ -144,6 +176,9 @@ export const BookCheckoutPage: React.FC<{}> = () => {
     })
   }, [authState, isCheckedOut]);
 
+  //============================
+  // 책 대출 여부 가져오기
+  //============================
   useEffect(() => {
     const fetchUserCheckedOutBook = async () => {
       if (authState && authState.isAuthenticated) {
@@ -162,20 +197,20 @@ export const BookCheckoutPage: React.FC<{}> = () => {
         }
 
         const bookCheckedOutResponseJson = await bookCheckedOut.json();
-        console.log("bookCheckedOutResponseJson : ", bookCheckedOutResponseJson);
+
         setIsCheckedOut(bookCheckedOutResponseJson);
       }
       setIsLoadingBookCheckedOut(false);
     }
     fetchUserCheckedOutBook().catch((error: any) => {
       setIsLoadingBookCheckedOut(false);
-      setHttpError(error.message + "11");
+      setHttpError(error.message);
     })
   }, [authState]);
 
 
   // 로딩 중일 때
-  if (isLoading || isLoadingReview || isLoadingCurrentLoansCount || isLoadingBookCheckedOut) {
+  if (isLoading || isLoadingReview || isLoadingCurrentLoansCount || isLoadingBookCheckedOut || isLoadingUserReview) {
     return <SpinnerLoading />;
   }
 
@@ -190,6 +225,9 @@ export const BookCheckoutPage: React.FC<{}> = () => {
     );
   }
 
+  //============================
+  // 책 대출하기
+  //============================
   async function checkoutBook() {
     const url = `http://localhost/api/books/secure/checkout?bookId=${book?.id}`;
     const requestOptions = {
@@ -204,6 +242,33 @@ export const BookCheckoutPage: React.FC<{}> = () => {
       throw new Error('Something went wrong!');
     }
     setIsCheckedOut(true);
+  }
+
+  //============================
+  // 리뷰 제출하기
+  //============================
+  async function submitReview(startInput: number, reviewDescription: string) {
+    let bookId: number = 0;
+    if (book?.id) {
+      bookId = book.id;
+    }
+
+    const reviewRequestModel = new ReviewRequestModel(startInput, bookId, reviewDescription); // 리뷰 요청 모델
+    const url = `http://localhost/api/reviews/secure`;
+    const requestOptions = {
+      method: 'POST',
+      headers: {        
+        Authorization: `Bearer ${authState?.accessToken?.accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(reviewRequestModel)   // 리뷰 요청 모델을 JSON 문자열로 변환      
+    };
+
+    const returnResponse = await fetch(url, requestOptions);
+    if (!returnResponse.ok) {
+      throw new Error('Something went wrong!');
+    }
+    setIsReviewLeft(true);
   }
 
   return (
@@ -231,7 +296,8 @@ export const BookCheckoutPage: React.FC<{}> = () => {
             </div>
           </div>
           <CheckoutAndReviewBox book={book} mobile={false} currentLoansCount={currentLoansCount}
-            isAuthenticated={authState?.isAuthenticated} isCheckedOut={isCheckedOut} checkoutBook={checkoutBook} />
+            isAuthenticated={authState?.isAuthenticated} isCheckedOut={isCheckedOut}
+            checkoutBook={checkoutBook} isReviewLeft={isReviewLeft} submitReview={submitReview} />
         </div>
         <hr />
         <LatestReviews reviews={reviews} bookId={book?.id} mobile={false} />
@@ -258,7 +324,8 @@ export const BookCheckoutPage: React.FC<{}> = () => {
           </div>
         </div>
         <CheckoutAndReviewBox book={book} mobile={false} currentLoansCount={currentLoansCount}
-          isAuthenticated={authState?.isAuthenticated} isCheckedOut={isCheckedOut} checkoutBook={checkoutBook} />
+          isAuthenticated={authState?.isAuthenticated} isCheckedOut={isCheckedOut}
+          checkoutBook={checkoutBook} isReviewLeft={isReviewLeft} submitReview={submitReview} />
         <hr />
         <LatestReviews reviews={reviews} bookId={book?.id} mobile={true} />
       </div>

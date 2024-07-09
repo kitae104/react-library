@@ -1,14 +1,17 @@
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { OktaAuth, toRelativeUrl } from '@okta/okta-auth-js';
+import { LoginCallback, Security } from '@okta/okta-react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import './App.css';
+import LoginWidget from './Auth/LoginWidget';
+import { BookCheckoutPage } from './layouts/BookCheckoutPage/BookCheckoutPage';
+import { ReviewListPage } from './layouts/BookCheckoutPage/ReviewListPage/ReviewListPage';
 import { HomePage } from './layouts/HomePage/HomePage';
 import { Footer } from './layouts/NavbarAndFooter/Footer';
 import { Navbar } from './layouts/NavbarAndFooter/Navbar';
 import { SearchBookPage } from './layouts/SearchBookPage/SearchBookPage';
-import { BookCheckoutPage } from './layouts/BookCheckoutPage/BookCheckoutPage';
+import { ShelfPage } from './layouts/ShelfPage/ShelfPage';
 import { oktaConfig } from './lib/oktaConfig';
-import { OktaAuth, toRelativeUrl } from '@okta/okta-auth-js';
-import { LoginCallback, Security } from '@okta/okta-react';
-import LoginWidget from './Auth/LoginWidget';
+import { RequiredAuth } from './layouts/Utils/RequiredAuth';
 
 const oktaAuth = new OktaAuth(oktaConfig)
 
@@ -35,9 +38,13 @@ export const App = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchBookPage />} />
+            <Route path='/reviewlist/:bookId' element={<ReviewListPage />} />            
             <Route path="/checkout/:bookId" element={<BookCheckoutPage />} />
             <Route path="/login" element={<LoginWidget config={oktaConfig} />} />            
-            <Route path='/login/callback' element={<LoginCallback />} />            
+            <Route path='/login/callback' element={<LoginCallback />} />   
+            <Route element={<RequiredAuth />}>
+              <Route path="/shelf" element={<ShelfPage />} />       
+            </Route>
           </Routes>
         </div>
         <Footer />
