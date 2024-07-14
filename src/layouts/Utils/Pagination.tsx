@@ -33,6 +33,7 @@ export const Pagination: React.FC<{
     }
 
     return (
+        /* 페이지 정보 보여주기 */
         <nav aria-label="...">
             <ul className='pagination'>
                 <li className='page-item' onClick={() => props.paginate(1)}>
