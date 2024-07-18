@@ -1,3 +1,4 @@
+import React from 'react';
 import { OktaAuth, toRelativeUrl } from '@okta/okta-auth-js';
 import { LoginCallback, Security } from '@okta/okta-react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
@@ -17,9 +18,7 @@ import { MessagesPage } from './layouts/MessagesPage/MessagesPage';
 const oktaAuth = new OktaAuth(oktaConfig)
 
 
-export const App = () => {
-
-  
+export const App = () => {  
 
   const CustomAuthHandler = () => {
     const navigate = useNavigate();

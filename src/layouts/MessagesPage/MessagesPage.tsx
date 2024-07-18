@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { PostNewMessage } from "./components/PostNewMessage";
+import { Messages } from "./components/Messages";
 
 export const MessagesPage: React.FC<{}> = () => {
 
@@ -25,10 +27,10 @@ export const MessagesPage: React.FC<{}> = () => {
                 </nav>
                 <div className='tab-content' id='nav-tabContent'>
                     <div className='tab-pane fade show active' id='nav-send-message' role='tabpanel' aria-labelledby='nav-send-message-tab'>
-                        <p>Post new message</p>
+                        <p><PostNewMessage /></p>
                     </div>
                     <div className='tab-pane fade' id='nav-message' role='tabpanel' aria-labelledby='nav-message-tab'>
-                        {messagesClick ? <p>Messages</p> : <></>}
+                        {messagesClick ? <Messages /> : <></>}
                     </div>
                 </div>
             </div>
