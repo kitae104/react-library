@@ -14,6 +14,7 @@ import { ShelfPage } from './layouts/ShelfPage/ShelfPage';
 import { oktaConfig } from './lib/oktaConfig';
 import { RequiredAuth } from './layouts/Utils/RequiredAuth';
 import { MessagesPage } from './layouts/MessagesPage/MessagesPage';
+import { MangeLibraryPage } from './layouts/ManageLibraryPage/ManageLibraryPage';
 
 const oktaAuth = new OktaAuth(oktaConfig)
 
@@ -45,6 +46,7 @@ export const App = () => {
             <Route element={<RequiredAuth />}>
               <Route path="/shelf" element={<ShelfPage />} />     
               <Route path='/messages' element={<MessagesPage />} />  
+              <Route path='/admin' element={<MangeLibraryPage />} />  
             </Route>
           </Routes>
         </div>
