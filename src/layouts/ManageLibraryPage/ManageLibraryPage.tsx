@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminMessages } from "./components/AdminMessages";
 import { AddNewBook } from "./components/AddNewBook";
+import { ChangeQuantityOfBooks } from "./components/ChangeQuantityOfBooks";
 
 export const MangeLibraryPage: React.FC<{}> = () => {
 
@@ -62,7 +63,7 @@ export const MangeLibraryPage: React.FC<{}> = () => {
                         <AddNewBook />
                     </div>
                     <div className='tab-pane fade' id='nav-quantity' role='tabpanel' aria-labelledby='nav-quantity-tab'>
-                        {changeQuantityOfBooksClick ? <>Chanage quantity</> : <></>}
+                        {changeQuantityOfBooksClick ? <ChangeQuantityOfBooks /> : <></>}
                     </div>
                     <div className='tab-pane fade' id='nav-messages' role='tabpanel' aria-labelledby='nav-messages-tab'>
                         {messageClick ? <AdminMessages /> : <></>}

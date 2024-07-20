@@ -36,6 +36,11 @@ export const Navbar: React.FC<{}> = () => {
                                 <Link to="/shelf" className="nav-link">Shelf</Link>
                             </li>
                         }
+                        {authState.isAuthenticated && authState.accessToken?.claims?.userType === 'admin' &&
+                            <li className='nav-item'>
+                                <Link to="/admin" className="nav-link">Admin</Link>
+                            </li>
+                        }
                     </ul>
 
                     {/* 인증 여부에 따라 로그인과 로그 아웃 처리 */}
