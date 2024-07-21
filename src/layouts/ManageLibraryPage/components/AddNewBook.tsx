@@ -40,7 +40,7 @@ export const AddNewBook: React.FC<{}> = () => {
     }
 
     async function submitNewBook() {
-        const url = `http://localhost/api/admin/secure/add/book`;
+        const url = `${process.env.REACT_APP_API}/admin/secure/add/book`;
         if (authState?.isAuthenticated && title !== '' && author !== '' && category !== 'Category'
             && description !== '' && copies > 0) {
             const book: AddBookRequest = new AddBookRequest(title, author, description, copies, category);  // 새 책 생성

@@ -21,7 +21,7 @@ export const Messages: React.FC<{}> = () => {
     useEffect(() => {
         const fetchUserMessages = async () => {
             if (authState && authState.isAuthenticated) {   // 인증 상태 확인
-                const url = `http://localhost/api/messages/search/findByUserEmail?userEmail=${authState?.accessToken?.claims.sub}&page=${currentPage - 1}&size=${messagesPerPage}`;
+                const url = `${process.env.REACT_APP_API}/messages/search/findByUserEmail?userEmail=${authState?.accessToken?.claims.sub}&page=${currentPage - 1}&size=${messagesPerPage}`;
                 const requestOptions = {    // 요청 옵션
                     method: 'GET',  // 메소드 설정
                     headers: {  // 헤더 설정

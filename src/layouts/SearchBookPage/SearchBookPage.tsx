@@ -25,7 +25,7 @@ export const SearchBookPage: React.FC<{}> = () => {
             setIsLoading(true);
 
             try {
-                const baseUrl: string = "http://localhost/api/books";
+                const baseUrl: string = `${process.env.REACT_APP_API}/books`;
                 let url: string = '';
 
                 if (searchUrl === '') {

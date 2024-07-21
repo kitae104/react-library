@@ -23,7 +23,7 @@ export const ReviewListPage: React.FC<{}> = () => {
     //============================
     useEffect(() => {
         const fetchBookReviews = async () => {
-            const reviewUrl: string = `http://localhost/api/reviews/search/findByBookId?bookId=${bookId}&page=${currentPage - 1}&size=${reviewsPerPage}`;
+            const reviewUrl: string = `${process.env.REACT_APP_API}/reviews/search/findByBookId?bookId=${bookId}&page=${currentPage - 1}&size=${reviewsPerPage}`;
 
             const responseReviews = await fetch(reviewUrl);
 
